@@ -1,7 +1,13 @@
 name: Test ufbt action with dev SDK
 
 on:
-  [push, pull_request]
+  push:
+    branches:
+      - dev
+      - "release*"
+    tags:
+      - '*'
+  pull_request:
 
 jobs:
   run-test-on-latest:
