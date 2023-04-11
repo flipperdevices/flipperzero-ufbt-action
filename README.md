@@ -91,30 +91,32 @@ jobs:
 
 ## Inputs
 
+All inputs are **optional**. If you don't specify any inputs, `ufbt` will build your application for the latest release version of official firmware. You can use [fap-artifacts](#fap-artifacts) output to get a list of built files to [upload them](https://github.com/marketplace/actions/upload-a-build-artifact).
+
 #### `task`
 
-**Optional** Task to run. Can be `setup`, `build` or `lint`. Default is `"build"`.
+Task to run. Can be `setup`, `build` or `lint`. Default is `"build"`.
 
 #### `app-dir`
 
-**Optional** Path to application's source code. Default is `"."` - the root of the repository.
+Path to application's source code. Default is `"."` — the root of the repository.
 
 #### `ufbt-version`
 
-**Optional** Version of `ufbt` to use. Default is `"latest"` - the latest version available on PyPI. If set to `prerelease`, this action will fetch the latest [pre-release version](https://pypi.org/project/ufbt/#history). You can also use a PyPI version specifier, such as `">=0.2.1,<0.3.0"`.
+Version of `ufbt` to use. Default is `"latest"` — the latest version available on PyPI. If set to `prerelease`, this action will fetch the latest [pre-release version](https://pypi.org/project/ufbt/#history). You can also use a PyPI version specifier, such as `">=0.2.1,<0.3.0"`.
 
 #### `ufbt-args`
 
-**Optional** Additional arguments to pass to `ufbt`. Default is `-s` - which suppresses build system output, only leaving subcommands' outputs, such as compiler messages. Set to `""` for extra verbosity. 
+Additional arguments to pass to `ufbt`. Default is `-s` — which suppresses build system output, only leaving subcommands' outputs, such as compiler messages. Set to `""` for extra verbosity. 
 Only handled when `task` is set to `build` or `lint`. See `ufbt` documentation for details.
 
 #### `skip-setup`
 
-**Optional** If set to `true`, skips SDK setup. Useful when running multiple action multiple times. Default is `false`.
+If set to `true`, skips SDK setup. Useful when running multiple action multiple times. Default is `false`.
 
 #### SDK source options
 
-Table below describes options for SDK update. See ufbt documentation on available [SDK update modes](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md#managing-the-sdk) for details. All these inputs are **optional**.
+Table below describes options for SDK update. See ufbt documentation on available [SDK update modes](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md#managing-the-sdk) for details.
 
 | Input name      | `ufbt update` argument | Description |
 | ---             | ---                    | --- |
