@@ -1,4 +1,4 @@
-name: "ufbt: Build Flipper Application Packages (.faps) for Flipper Zero"
+name: "Build Flipper Application Package (.fap)"
 author: "@flipperdevices"
 description: |
   Provides a composite action to install `ufbt`, build and lint applications for Flipper Zero.
