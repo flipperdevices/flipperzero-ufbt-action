@@ -16,6 +16,11 @@ inputs:
     required: false
     default: build
 
+  ufbt-args:
+    description: Extra arguments to pass to 'ufbt' for build and lint tasks. Default is '-s' to suppress ufbt output and only show subprocess output
+    required: false
+    default: "-s"
+
   skip-setup:
     description: Skip ufbt setup. Useful for multiple invocation of the action
     required: false
@@ -167,7 +172,7 @@ runs:
         FAP_SRC_PATH=`realpath $GITHUB_WORKSPACE/${{ inputs.app-dir }}`
         DIST_PATH=$FAP_SRC_PATH/dist
         cd $FAP_SRC_PATH
-        BUILD_MESSAGES="$(ufbt -s 2>&1 | tee /dev/stderr)"
+        BUILD_MESSAGES="$(ufbt ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
         BUILD_STATUS=${PIPESTATUS[0]}
         if [ "$BUILD_STATUS" -ne 0 ]; then
           # Save multiline output
@@ -182,7 +187,7 @@ runs:
         fi
         API_VERSION=$(ufbt -s get_apiversion || echo 0.0)
         echo "build_artifacts<<EOF" >> $GITHUB_OUTPUT
-        echo "$(ls $DIST_PATH/*.fa[pl])" >> $GITHUB_OUTPUT
+        echo "$(ls $DIST_PATH/*.fa[pl] || echo '')" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
         echo "api_version=$API_VERSION" >> $GITHUB_OUTPUT
         echo "dist_dir=$DIST_PATH" >> $GITHUB_OUTPUT
@@ -195,7 +200,7 @@ runs:
       run: |
         set +e
         cd $GITHUB_WORKSPACE/${{ inputs.app-dir }} 
-        LINT_MESSAGES="$(ufbt lint -s 2>&1 | tee /dev/stderr)"
+        LINT_MESSAGES="$(ufbt lint ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
         LINT_STATUS=${PIPESTATUS[0]}
         if [ "$LINT_STATUS" -eq 0 ]; then
           echo "Lint: all good ✨" >> $GITHUB_STEP_SUMMARY

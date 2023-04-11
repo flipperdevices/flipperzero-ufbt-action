@@ -99,6 +99,11 @@ jobs:
 
 **Optional** Path to application's source code. Default is `"."` - the root of the repository.
 
+#### `ufbt-args`
+
+**Optional** Additional arguments to pass to `ufbt`. Default is `-s` - which suppresses build system output, only leaving subcommands' outputs, such as compiler messages. Set to `""` for extra verbosity. 
+Only handled when `task` is set to `build` or `lint`. See `ufbt` documentation for details.
+
 #### `skip-setup`
 
 **Optional** If set to `true`, skips SDK setup. Useful when running multiple action multiple times. Default is `false`.
