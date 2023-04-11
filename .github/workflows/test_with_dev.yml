@@ -1,0 +1,12 @@
+name: Test ufbt action with dev SDK
+
+on:
+  [push, pull_request]
+
+jobs:
+  run-test-on-latest:
+    name: Test ufbt action with dev SDK
+    uses: ./.github/workflows/test_ufbt.yml
+    with:
+      ufbt-version: prerelease
+      sdk-channel: dev

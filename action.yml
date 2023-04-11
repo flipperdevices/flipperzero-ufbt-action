@@ -1,0 +1,218 @@
+name: "Build Flipper Application Package (.fap)"
+author: "@flipperdevices"
+description: |
+  Provides a composite action to install `ufbt`, build and lint applications for Flipper Zero.
+branding:
+  icon: 'cpu'
+  color: 'orange'
+
+inputs:
+  app-dir:
+    description: Path to application's source code (if not the root of repository)
+    required: false
+    default: "."
+
+  task: 
+    description: "Task to run. Valid values: 'build', 'lint', 'setup'"
+    required: false
+    default: build
+
+  ufbt-args:
+    description: Extra arguments to pass to 'ufbt' for build and lint tasks. Default is '-s' to suppress ufbt output and only show subprocess output
+    required: false
+    default: "-s"
+
+  skip-setup:
+    description: Skip ufbt setup. Useful for multiple invocation of the action
+    required: false
+    default: ${{ false }}
+
+  sdk-channel:
+    description: Release channel to use. Matches argument "--channel" for ufbt update
+    required: false
+    default: ""
+
+  sdk-branch:
+    description: Branch to use for updates. Matches argument "--branch" for ufbt update
+    required: false
+    default: ""
+
+  sdk-index-url:
+    description: Index URL to use for updates. Matches argument "--index-url" for ufbt update
+    required: false
+    default: ""
+
+  sdk-file:
+    description: Path to SDK archive. Matches argument "--local" for ufbt update
+    required: false
+    default: ""
+
+  sdk-url:
+    description: URL to SDK archive. Matches argument "--url" for ufbt update
+    required: false
+    default: ""
+
+  sdk-hw-target:
+    description: Hardware target to use. Matches argument "--hw-target" for ufbt update
+    required: false
+    default: ""
+
+  ufbt-version:
+    description: ufbt version to use. Can be 'latest', 'prerelease' or a specific version from PyPI (e.g. '==0.2.1')
+    required: false
+    default: latest
+
+
+outputs:
+  fap-artifacts:
+    description: "Build artifacts"
+    value: ${{ steps.build-fap.outputs.build_artifacts }}
+
+  fap-dir:
+    description: "Directory containing application build artifacts"
+    value: ${{ steps.build-fap.outputs.dist_dir }}
+
+  api-version:
+    description: "API version. Set by build task"
+    value: ${{ steps.build-fap.outputs.api_version }}
+
+  suffix:
+    description: "String, combination of hardware target, API version & SDK version. Set by build task"
+    value: ${{ steps.build-fap.outputs.suffix }}
+
+  lint-messages:
+    description: Linter output. Set by lint task
+    value: ${{ steps.lint-app.outputs.lint-messages }}
+
+  ufbt-status:
+    description: JSON status object for ufbt. Use with fromJSON()
+    value: ${{ steps.ufbt-status.outputs.json }}
+
+  toolchain-version:
+    description: Toolchain version
+    value: ${{ steps.get-tooclhain-version.outputs.required-version }}
+
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      if: inputs.skip-setup == 'false'
+      with:
+        python-version: '3.8'
+
+    - name: Install ufbt
+      if: inputs.skip-setup == 'false'
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        if [ "${{ inputs.ufbt-version }}" == "prerelease" ]; then
+          pip install --upgrade --pre ufbt
+        elif [ "${{ inputs.ufbt-version }}" == "latest" ]; then
+          pip install --upgrade ufbt
+        else 
+          pip install --upgrade ufbt${{ inputs.ufbt-version }}
+        fi
+        
+    - name: Update ufbt
+      shell: bash
+      run: |
+        UFBT_UPDATE_ARGS=""
+        if [ -n "${{ inputs.sdk-hw-target }}" ]; then
+          UFBT_UPDATE_ARGS="$UFBT_UPDATE_ARGS --hw-target ${{ inputs.sdk-hw-target }}"
+        fi
+        if [ -n "${{ inputs.sdk-channel }}" ]; then
+          UFBT_UPDATE_ARGS="$UFBT_UPDATE_ARGS --channel ${{ inputs.sdk-channel }}"
+        fi
+        if [ -n "${{ inputs.sdk-branch }}" ]; then
+          UFBT_UPDATE_ARGS="$UFBT_UPDATE_ARGS --branch ${{ inputs.sdk-branch }}"
+        fi
+        if [ -n "${{ inputs.sdk-index-url }}" ]; then
+          UFBT_UPDATE_ARGS="$UFBT_UPDATE_ARGS --index-url ${{ inputs.sdk-index-url }}"
+        fi
+        if [ -n "${{ inputs.sdk-file }}" ]; then
+          UFBT_UPDATE_ARGS="$UFBT_UPDATE_ARGS --local ${{ inputs.sdk-file }}"
+        fi
+        if [ -n "${{ inputs.sdk-url }}" ]; then
+          UFBT_UPDATE_ARGS="$UFBT_UPDATE_ARGS --url ${{ inputs.sdk-url }}"
+        fi
+        ufbt update $UFBT_UPDATE_ARGS
+
+    - name: Get ufbt status as JSON
+      id: ufbt-status
+      shell: bash
+      run: |
+        echo "json=$(ufbt status --json)" >> $GITHUB_OUTPUT
+
+    - name: Check toolchain version
+      id: get-tooclhain-version
+      shell: bash
+      run: |
+        echo "required-version=`bash -c "export $(grep FBT_TOOLCHAIN_VERSION\= ${{ fromJSON(steps.ufbt-status.outputs.json).sdk_dir }}/scripts/toolchain/fbtenv.sh) printenv FBT_TOOLCHAIN_VERSION"`" >> $GITHUB_OUTPUT
+        echo "deployed-version=`cat ${{ fromJSON(steps.ufbt-status.outputs.json).toolchain_dir }}/*/VERSION 2>/dev/null || echo 0`" >> $GITHUB_OUTPUT
+        
+    - name: Cache toolchain
+      uses: actions/cache@v3
+      if: steps.get-tooclhain-version.outputs.required-version != steps.get-tooclhain-version.outputs.deployed-version
+      with:
+        path: ${{ fromJSON(steps.ufbt-status.outputs.json).toolchain_dir }}
+        key: ${{ runner.os }}-fbt-toolchain-${{ steps.get-tooclhain-version.outputs.required-version }}
+    
+    - name: Add problem matcher
+      shell: bash
+      run: |
+        echo "::add-matcher::${{ github.action_path }}/ufbt-problem-matcher.json" 
+
+    - name: Build app
+      id: build-fap
+      if: inputs.task == 'build'
+      shell: bash
+      run: |
+        set +e
+        FAP_SRC_PATH=`realpath $GITHUB_WORKSPACE/${{ inputs.app-dir }}`
+        DIST_PATH=$FAP_SRC_PATH/dist
+        cd $FAP_SRC_PATH
+        BUILD_MESSAGES="$(ufbt ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
+        BUILD_STATUS=${PIPESTATUS[0]}
+        if [ "$BUILD_STATUS" -ne 0 ]; then
+          # Save multiline output
+          echo "build-messages<<EOF" >> $GITHUB_OUTPUT
+          echo "$BUILD_MESSAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          printf "Build errors:\n\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+          echo "$BUILD_MESSAGES" >> $GITHUB_STEP_SUMMARY
+          printf "\n\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+          # Exit with error code
+          exit $BUILD_STATUS
+        fi
+        API_VERSION=$(ufbt -s get_apiversion || echo 0.0)
+        echo "build_artifacts<<EOF" >> $GITHUB_OUTPUT
+        echo "$(ls $DIST_PATH/*.fa[pl] || echo '')" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        echo "api_version=$API_VERSION" >> $GITHUB_OUTPUT
+        echo "dist_dir=$DIST_PATH" >> $GITHUB_OUTPUT
+        echo "suffix=${{ fromJSON(steps.ufbt-status.outputs.json).target }}-api-$API_VERSION-${{ fromJSON(steps.ufbt-status.outputs.json).version }}" >> $GITHUB_OUTPUT
+
+    - name: Lint sources
+      id: lint-app
+      if: inputs.task == 'lint'
+      shell: bash
+      run: |
+        set +e
+        cd $GITHUB_WORKSPACE/${{ inputs.app-dir }} 
+        LINT_MESSAGES="$(ufbt lint ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
+        LINT_STATUS=${PIPESTATUS[0]}
+        if [ "$LINT_STATUS" -eq 0 ]; then
+          echo "Lint: all good ✨" >> $GITHUB_STEP_SUMMARY
+        else 
+          # Save multiline output
+          echo "lint-messages<<EOF" >> $GITHUB_OUTPUT
+          echo "$LINT_MESSAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          printf "Lint errors:\n\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+          echo "$LINT_MESSAGES" >> $GITHUB_STEP_SUMMARY
+          printf "\n\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+          # Exit with error code
+          exit $LINT_STATUS
+        fi
