@@ -39,7 +39,7 @@ jobs:
       - name: Upload app artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: fap-${{ steps.build-app.outputs.suffix }}
+          name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
           path: ${{ steps.build-app.outputs.fap-artifacts }}
       # You can remove this step if you don't want to check source code formatting
       - name: Lint sources
@@ -85,7 +85,7 @@ jobs:
       - name: Upload app artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: fap-${{ steps.build-app.outputs.suffix }}
+          name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
           path: ${{ steps.build-app.outputs.fap-artifacts }}
 ```
 
