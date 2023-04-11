@@ -70,7 +70,7 @@ jobs:
           - name: Unofficial firmware
             # example URL, replace with a valid one
             # you can also use other modes for specifying SDK sources
-            sdk-index-url: https://up.unofficialflip.com/directory.json
+            sdk-index-url: https://flipper.example.com/directory.json
             sdk-channel: dev
     name: 'ufbt: Build for ${{ matrix.name }}'
     steps:
