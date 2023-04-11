@@ -1,6 +1,7 @@
-name: ufbt wrapper action
+name: "ufbt: Build Flipper Application Packages (.faps) for Flipper Zero"
 author: "@flipperdevices"
-description: Configures ufbt for building and linting Flipper applications
+description: |
+  Provides a composite action to install `ufbt`, build and lint applications for Flipper Zero.
 branding:
   icon: 'cpu'
   color: 'orange'
