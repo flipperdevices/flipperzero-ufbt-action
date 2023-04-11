@@ -1,0 +1,84 @@
+name: Run tests for ufbt action
+
+on: 
+  workflow_call:
+    inputs:
+      ufbt-version:
+        description: 'ufbt version to use'
+        type: string
+        required: false
+        default: 'latest'
+      sdk-channel:
+        description: 'Release channel to use'
+        type: string
+        required: false
+        default: ''
+      sdk-file:
+        description: 'Path to SDK archive'
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  test-ufbt-action:
+    runs-on: ubuntu-latest
+    name: Test ufbt action
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup ufbt
+        uses: ./ # Uses an action in the root directory
+        with:
+          ufbt-version: ${{ inputs.ufbt-version }}
+          sdk-channel: ${{ inputs.sdk-channel }}
+          sdk-file: ${{ inputs.sdk-file }}
+          task: setup
+
+      - name: Create app
+        id: create-app
+        shell: bash
+        run: |
+          mkdir test
+          cd test
+          ufbt create APPID=test
+
+      - name: Build test app
+        uses: ./
+        id: build-app
+        with:
+          skip-setup: true
+          app-dir: 'test'
+
+      - name: Upload app artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: fap-${{ steps.build-app.outputs.suffix }}
+          path: ${{ steps.build-app.outputs.fap-artifacts }}
+
+      - name: Break app
+        id: break-app
+        shell: bash
+        run: |
+          echo "static int testmain(int unused_i) { return 1; }" >> test/test.c
+
+      - name: Lint broken app
+        uses: ./
+        id: lint-broken-app
+        continue-on-error: true
+        with:
+          skip-setup: true
+          app-dir: 'test'
+          task: 'lint'
+
+      - name: Build broken app
+        uses: ./
+        id: build-broken-app
+        continue-on-error: true
+        with:
+          skip-setup: true
+          app-dir: 'test'
+
+      - name: Fail if lint or build of broken app succeeded
+        if: steps.lint-broken-app.outcome == 'success' || steps.build-broken-app.outcome == 'success'
+        run: exit 1
