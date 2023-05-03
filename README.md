@@ -31,7 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build with ufbt
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1.0
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.1
         id: build-app
         with:
           # Set to 'release' to build for latest published release version
@@ -43,7 +43,7 @@ jobs:
           path: ${{ steps.build-app.outputs.fap-artifacts }}
       # You can remove this step if you don't want to check source code formatting
       - name: Lint sources
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1.0
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.1
         with:
           # skip SDK setup, we already did it in previous step
           skip-setup: true
@@ -77,7 +77,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build with ufbt
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1.0
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.1
         id: build-app
         with:
           sdk-channel: ${{ matrix.sdk-channel }}
