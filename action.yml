@@ -170,7 +170,7 @@ runs:
       shell: bash
       run: |
         set +e
-        FAP_SRC_PATH=`realpath $GITHUB_WORKSPACE/${{ inputs.app-dir }}`
+        FAP_SRC_PATH=`realpath ${{ inputs.app-dir }}`
         DIST_PATH=$FAP_SRC_PATH/dist
         cd $FAP_SRC_PATH
         BUILD_MESSAGES="$(ufbt ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
@@ -200,7 +200,7 @@ runs:
       shell: bash
       run: |
         set +e
-        cd $GITHUB_WORKSPACE/${{ inputs.app-dir }} 
+        cd ${{ inputs.app-dir }} 
         LINT_MESSAGES="$(ufbt lint ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
         LINT_STATUS=${PIPESTATUS[0]}
         if [ "$LINT_STATUS" -eq 0 ]; then
