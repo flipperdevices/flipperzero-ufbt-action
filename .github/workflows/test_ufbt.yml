@@ -82,3 +82,7 @@ jobs:
       - name: Fail if lint or build of broken app succeeded
         if: steps.lint-broken-app.outcome == 'success' || steps.build-broken-app.outcome == 'success'
         run: exit 1
+
+      - name: Fail if lint or build of broken app did not produce error output
+        if: steps.lint-broken-app.outputs.lint-messages == '' || steps.build-broken-app.outputs.build-errors == ''
+        run: exit 1
