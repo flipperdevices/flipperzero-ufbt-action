@@ -157,6 +157,10 @@ A suffix to use in artifact names, includes hardware target, API and SDK version
 
 A list of linter messages, in case of any formatting errors. Only available in `lint` mode.
 
+#### `build-errors`
+
+A list of build errors, in case of any. Only available in `build` mode.
+
 #### `ufbt-status`
 
 A string, JSON object with ufbt status. Contains `ufbt status --json` output. Useful for extracting information about ufbt's directories, configured modes, etc. Useful in combination with [fromJSON() function](https://docs.github.com/en/actions/learn-github-actions/expressions#fromjson) to extract information from the output. For example, `${{ fromJSON(steps.<build>.ufbt-status).toolchain_dir }}`. Available in all modes. 
