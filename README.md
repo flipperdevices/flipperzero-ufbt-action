@@ -31,7 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build with ufbt
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1.1
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
         id: build-app
         with:
           # Set to 'release' to build for latest published release version
@@ -43,7 +43,7 @@ jobs:
           path: ${{ steps.build-app.outputs.fap-artifacts }}
       # You can remove this step if you don't want to check source code formatting
       - name: Lint sources
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1.1
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
         with:
           # skip SDK setup, we already did it in previous step
           skip-setup: true
@@ -52,11 +52,19 @@ jobs:
 
 ### Advanced example: build for multiple SDK sources
 
-This example will build your application for 3 different SDK sources: `dev` and `release` channels of official firmware, and for an SDK from an unofficial source. It will upload generated binaries to GitHub artifacts.
+This example will build your application for 3 different SDK sources: `dev` and `release` channels of official firmware, and for an SDK from an unofficial source. It will upload generated binaries to GitHub artifacts. It will also do a build every day, even if there are no new commits in the repository, so you can be sure that your application is always up to date with the latest SDK.
 
 ```yaml
 name: "FAP: Build for multiple SDK sources"
-on: [push, pull_request]
+on:
+  push:
+    ## put your main branch name under "braches"
+    #branches: 
+    #  - master 
+  pull_request:
+  schedule: 
+    # do a build every day
+    - cron: "1 1 * * *"
 jobs:
   ufbt-build-action:
     runs-on: ubuntu-latest
@@ -77,7 +85,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build with ufbt
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1.1
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
         id: build-app
         with:
           sdk-channel: ${{ matrix.sdk-channel }}
