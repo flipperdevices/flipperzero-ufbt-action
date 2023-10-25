@@ -102,7 +102,7 @@ runs:
   using: composite
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       if: inputs.skip-setup == 'false'
       with:
         python-version: '3.11'
@@ -111,13 +111,13 @@ runs:
       if: inputs.skip-setup == 'false'
       shell: bash
       run: |
-        python -m pip install --upgrade pip
+        python3 -m pip install --upgrade pip
         if [ "${{ inputs.ufbt-version }}" == "prerelease" ]; then
-          pip install --upgrade --pre ufbt
+          python3 -m pip install --upgrade --pre ufbt
         elif [ "${{ inputs.ufbt-version }}" == "latest" ]; then
-          pip install --upgrade ufbt
+          python3 -m pip install --upgrade ufbt
         else 
-          pip install --upgrade ufbt${{ inputs.ufbt-version }}
+          python3 -m pip install --upgrade ufbt${{ inputs.ufbt-version }}
         fi
         
     - name: Update ufbt
