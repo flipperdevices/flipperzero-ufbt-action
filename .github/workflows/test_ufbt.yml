@@ -1,4 +1,4 @@
-name: Run tests for ufbt action
+name: Tests
 
 on: 
   workflow_call:
@@ -22,7 +22,7 @@ on:
 jobs:
   test-ufbt-action:
     runs-on: ubuntu-latest
-    name: Test ufbt action
+    name: Test action
     steps:
       - name: Checkout
         uses: actions/checkout@v4
