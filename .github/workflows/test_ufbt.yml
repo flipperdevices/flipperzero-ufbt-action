@@ -25,7 +25,7 @@ jobs:
     name: Test ufbt action
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup ufbt
         uses: ./ # Uses an action in the root directory
