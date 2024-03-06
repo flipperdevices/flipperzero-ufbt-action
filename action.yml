@@ -1,4 +1,5 @@
 name: "Build Flipper Application Package (.fap)"
+
 author: "@flipperdevices"
 description: |
   Provides a composite action to install `ufbt`, build and lint applications for Flipper Zero.
@@ -84,6 +85,10 @@ outputs:
     description: Linter output. Set by lint task
     value: ${{ steps.lint-app.outputs.lint-messages }}
 
+  build-errors:
+    description: Build errors. Set by build task
+    value: ${{ steps.build-fap.outputs.build-messages }}
+
   ufbt-status:
     description: JSON status object for ufbt. Use with fromJSON()
     value: ${{ steps.ufbt-status.outputs.json }}
@@ -97,22 +102,22 @@ runs:
   using: composite
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       if: inputs.skip-setup == 'false'
       with:
-        python-version: '3.8'
+        python-version: '3.11'
 
     - name: Install ufbt
       if: inputs.skip-setup == 'false'
       shell: bash
       run: |
-        python -m pip install --upgrade pip
+        python3 -m pip install --upgrade pip
         if [ "${{ inputs.ufbt-version }}" == "prerelease" ]; then
-          pip install --upgrade --pre ufbt
+          python3 -m pip install --upgrade --pre ufbt
         elif [ "${{ inputs.ufbt-version }}" == "latest" ]; then
-          pip install --upgrade ufbt
+          python3 -m pip install --upgrade ufbt
         else 
-          pip install --upgrade ufbt${{ inputs.ufbt-version }}
+          python3 -m pip install --upgrade ufbt${{ inputs.ufbt-version }}
         fi
         
     - name: Update ufbt
@@ -153,7 +158,7 @@ runs:
         echo "deployed-version=`cat ${{ fromJSON(steps.ufbt-status.outputs.json).toolchain_dir }}/*/VERSION 2>/dev/null || echo 0`" >> $GITHUB_OUTPUT
         
     - name: Cache toolchain
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       if: steps.get-tooclhain-version.outputs.required-version != steps.get-tooclhain-version.outputs.deployed-version
       with:
         path: ${{ fromJSON(steps.ufbt-status.outputs.json).toolchain_dir }}
@@ -170,7 +175,7 @@ runs:
       shell: bash
       run: |
         set +e
-        FAP_SRC_PATH=`realpath $GITHUB_WORKSPACE/${{ inputs.app-dir }}`
+        FAP_SRC_PATH=`realpath ${{ inputs.app-dir }}`
         DIST_PATH=$FAP_SRC_PATH/dist
         cd $FAP_SRC_PATH
         BUILD_MESSAGES="$(ufbt ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
@@ -200,7 +205,7 @@ runs:
       shell: bash
       run: |
         set +e
-        cd $GITHUB_WORKSPACE/${{ inputs.app-dir }} 
+        cd ${{ inputs.app-dir }} 
         LINT_MESSAGES="$(ufbt lint ${{ inputs.ufbt-args }} 2>&1 | tee /dev/stderr)"
         LINT_STATUS=${PIPESTATUS[0]}
         if [ "$LINT_STATUS" -eq 0 ]; then

@@ -1,4 +1,4 @@
-name: Run tests for ufbt action
+name: Testsuite
 
 on: 
   workflow_call:
@@ -22,10 +22,10 @@ on:
 jobs:
   test-ufbt-action:
     runs-on: ubuntu-latest
-    name: Test ufbt action
+    name: Test action
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup ufbt
         uses: ./ # Uses an action in the root directory
@@ -51,7 +51,7 @@ jobs:
           app-dir: 'test'
 
       - name: Upload app artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fap-${{ steps.build-app.outputs.suffix }}
           path: ${{ steps.build-app.outputs.fap-artifacts }}
@@ -81,4 +81,8 @@ jobs:
 
       - name: Fail if lint or build of broken app succeeded
         if: steps.lint-broken-app.outcome == 'success' || steps.build-broken-app.outcome == 'success'
+        run: exit 1
+
+      - name: Fail if lint or build of broken app did not produce error output
+        if: steps.lint-broken-app.outputs.lint-messages == '' || steps.build-broken-app.outputs.build-errors == ''
         run: exit 1
